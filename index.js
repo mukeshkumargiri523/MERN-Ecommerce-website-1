@@ -194,9 +194,7 @@ server.post("/create-payment-intent", async (req, res) => {
 });
 
 async function main() {
-  await mongoose.connect(
-    "mongodb+srv://MongoDB-first:8pw7I2HhlmMHSOiL@cluster0.bcjk5oj.mongodb.net/megakartecommerce?retryWrites=true&w=majority"
-  );
+  await mongoose.connect(process.env.MONGODB_URL);
   console.log("database connected");
 }
 
