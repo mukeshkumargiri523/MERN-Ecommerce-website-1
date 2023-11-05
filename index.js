@@ -21,6 +21,7 @@ const cartRouters = require("./routes/Cart");
 const orderRouters = require("./routes/Order");
 const { User } = require("./model/User");
 const { isAuth, sanitizeUser, cookieExtractor } = require("./service/common");
+const { Order } = require("./model/Order");
 
 //webhook
 
@@ -31,7 +32,7 @@ const endpointSecret = process.env.ENDPOINT_SECRET;
 server.post(
   "/webhook",
   express.raw({ type: "application/json" }),
-  (request, response) => {
+  async (request, response) => {
     const sig = request.headers["stripe-signature"];
 
     let event;
@@ -47,6 +48,11 @@ server.post(
     switch (event.type) {
       case "payment_intent.succeeded":
         const paymentIntentSucceeded = event.data.object;
+        const order = await Order.findById(
+          paymentIntentSucceeded.metadata.orderId
+        );
+        order.paymentStatus = "recieved";
+        await order.save();
         console.log({ paymentIntentSucceeded });
         // Then define and call a function to handle the event payment_intent.succeeded
         break;
