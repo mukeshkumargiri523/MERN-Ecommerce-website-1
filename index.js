@@ -11,7 +11,6 @@ const jwt = require("jsonwebtoken");
 const JwtStrategy = require("passport-jwt").Strategy;
 const cookieParser = require("cookie-parser");
 const path = require("path");
-
 const productRouters = require("./routes/Product");
 const brandRouters = require("./routes/Brand");
 const categoryRouters = require("./routes/Category");
@@ -22,6 +21,8 @@ const orderRouters = require("./routes/Order");
 const { User } = require("./model/User");
 const { isAuth, sanitizeUser, cookieExtractor } = require("./service/common");
 const { Order } = require("./model/Order");
+
+//mailer
 
 //webhook
 
@@ -93,9 +94,7 @@ server.use(
 
 //server.use(express.raw({ type: "application/json" }));
 
-server.use(express.json());
-
-//to parse req.body
+server.use(express.json()); //to parse req.body
 
 server.use("/products", isAuth(), productRouters.router);
 server.use("/brands", isAuth(), brandRouters.router);
@@ -104,6 +103,8 @@ server.use("/users", isAuth(), userRouters.router);
 server.use("/auth", authRouters.router);
 server.use("/cart", isAuth(), cartRouters.router);
 server.use("/orders", isAuth(), orderRouters.router);
+//mail endpoint
+
 // This line we add to make react router work in case of other routes doesn't matches
 server.get("*", (req, res) =>
   res.sendFile(path.resolve("build", "index.html"))

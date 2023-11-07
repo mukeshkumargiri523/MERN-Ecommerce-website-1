@@ -1,6 +1,6 @@
 const { User } = require("../model/User");
 const crypto = require("crypto");
-const { sanitizeUser } = require("../service/common");
+const { sanitizeUser, sendMail } = require("../service/common");
 const jwt = require("jsonwebtoken");
 
 exports.createUser = async (req, res) => {
@@ -56,10 +56,117 @@ exports.loginUser = (req, res) => {
     .json({ id: user.id, role: user.role });
 };
 
-exports.checkAuth = (req, res) => {
+exports.logout = (req, res) => {
+  res
+    .cookie("jwt", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    })
+    .sendStatus(200);
+};
+
+exports.checkAuth = async (req, res) => {
   if (req.user) {
     res.json(req.user);
   } else {
     res.sendStatus(401);
   }
 };
+
+exports.resetPasswordRequest = async (req, res) => {
+  const email = req.body.email;
+  const user = await User.findOne({ email: email });
+  if (user) {
+    const token = crypto.randomBytes(48).toString("hex");
+    user.resetPasswordToken = token;
+    await user.save();
+    //set token in email
+    const resetPage =
+      "http://localhost:3000/reset-password?token=" + token + "&email=" + email;
+    const subject = "reset Password for ecommerce";
+    const html = `<p> Click <a href='${resetPage}'>here </a> to Reset Password </p>`;
+    //let send email and token in the mail body so we can verify that user is geniune
+    if (email) {
+      const response = await sendMail({ to: email, subject, html });
+      res.send(response);
+    } else {
+      res.sendStatus(400);
+    }
+  } else {
+    res.sendStatus(400);
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, password, token } = req.body;
+
+  const user = await User.findOne({ email: email, resetPasswordToken: token });
+  if (user) {
+    const salt = crypto.randomBytes(16);
+    crypto.pbkdf2(
+      req.body.password,
+      salt,
+      310000,
+      32,
+      "sha512",
+      async function (err, hashedPassword) {
+        user.password = hashedPassword;
+        user.salt = salt;
+        await user.save();
+        const subject = " Password change Successfully";
+        const html = `<p> Successfully Reset Password </p>`;
+        if (email) {
+          const response = await sendMail({ to: email, subject, html });
+          res.send(response);
+        } else {
+          res.sendStatus(400);
+        }
+      }
+    );
+  } else {
+    res.sendStatus(400);
+  }
+};
+
+// exports.resetPasswordRequest = async (req, res) => {
+//   const resetPageLink = "http://localhost:3000/reset-password";
+//   const subject = "reset password for e-commerce";
+//   const html = `<p>Click <a href='${resetPageLink}'>here</a> to Reset Password</p>`;
+//   //   const resetPage = "http://localhost:3000/login";
+//   //   const subject = "reset password for e-commerce";
+//   //   const html = `<p><a href="${resetPage}">Click here</a> to Reset Password</p>`;
+
+//   if (req.body.email) {
+//     const response = await sendMail({ to: email, subject, html });
+//     res.json(response);
+//   } else {
+//     res.sendStatus(400);
+//   }
+// };
+
+// exports.resetPasswordRequest = async (req, res) => {
+//   const email = req.body.email;
+//   const user = await User.findOne({ email: email });
+//   if (user) {
+//     const token = crypto.randomBytes(48).toString("hex");
+//     user.resetPasswordToken = token;
+//     await user.save();
+
+//     // Also set token in email
+//     const resetPageLink =
+//       "http://localhost:3000/reset-password?token=" + token + "&email=" + email;
+//     const subject = "reset password for e-commerce";
+//     const html = `<p>Click <a href='${resetPageLink}'>here</a> to Reset Password</p>`;
+
+//     // lets send email and a token in the mail body so we can verify that user has clicked right link
+
+//     if (email) {
+//       const response = await sendMail({ to: email, subject, html });
+//       res.json(response);
+//     } else {
+//       res.sendStatus(400);
+//     }
+//   } else {
+//     res.sendStatus(400);
+//   }
+// }
