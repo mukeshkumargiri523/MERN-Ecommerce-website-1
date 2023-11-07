@@ -21,10 +21,6 @@ exports.createUser = async (req, res) => {
           if (err) {
             res.status(400).json(err);
           } else {
-            // res.cookie("rememberme", "1", {
-            //   expires: new Date(Date.now() + 900000),
-            //   httpOnly: true,
-            // });
             const token = jwt.sign(
               sanitizeUser(doc),
               process.env.JWT_SECRET_KEY
@@ -127,46 +123,3 @@ exports.resetPassword = async (req, res) => {
     res.sendStatus(400);
   }
 };
-
-// exports.resetPasswordRequest = async (req, res) => {
-//   const resetPageLink = "http://localhost:3000/reset-password";
-//   const subject = "reset password for e-commerce";
-//   const html = `<p>Click <a href='${resetPageLink}'>here</a> to Reset Password</p>`;
-//   //   const resetPage = "http://localhost:3000/login";
-//   //   const subject = "reset password for e-commerce";
-//   //   const html = `<p><a href="${resetPage}">Click here</a> to Reset Password</p>`;
-
-//   if (req.body.email) {
-//     const response = await sendMail({ to: email, subject, html });
-//     res.json(response);
-//   } else {
-//     res.sendStatus(400);
-//   }
-// };
-
-// exports.resetPasswordRequest = async (req, res) => {
-//   const email = req.body.email;
-//   const user = await User.findOne({ email: email });
-//   if (user) {
-//     const token = crypto.randomBytes(48).toString("hex");
-//     user.resetPasswordToken = token;
-//     await user.save();
-
-//     // Also set token in email
-//     const resetPageLink =
-//       "http://localhost:3000/reset-password?token=" + token + "&email=" + email;
-//     const subject = "reset password for e-commerce";
-//     const html = `<p>Click <a href='${resetPageLink}'>here</a> to Reset Password</p>`;
-
-//     // lets send email and a token in the mail body so we can verify that user has clicked right link
-
-//     if (email) {
-//       const response = await sendMail({ to: email, subject, html });
-//       res.json(response);
-//     } else {
-//       res.sendStatus(400);
-//     }
-//   } else {
-//     res.sendStatus(400);
-//   }
-// }
